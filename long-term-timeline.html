@@ -157,7 +157,7 @@
                     end: endDate,
                     title: startDate + " - " + endDate,
                     type: itemType,
-                    style: "background-color: " + colors[value[4]]
+                    style: "background-color: " + colors[(value[4] % colors.length)]
                 };
                 res.push(row);
                 i++;
