@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Key Dates Timeline for US CMS Software & Computing</title>
+    <meta charset="utf-8" />
+    <link href="//unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+        #visualization {
+            width: 2000px;
+            height: 1200px;
+            border: 1px solid lightgray;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<p>Key Dates Timeline for US CMS Software & Computing</p>
+
+<!--Add buttons to initiate auth sequence and sign out-->
+<button id="authorize_button" style="display: none;">Authorize</button>
+<button id="signout_button" style="display: none;">Sign Out</button>
+
+<pre id="content" style="white-space: pre-wrap;"></pre>
+
+<script type="text/javascript" >
+    // Client ID and API key from the Developer Console
+    var CLIENT_ID = '300834940465-boa7n1fso9j0qgccnphp6fgk1kr4tok5.apps.googleusercontent.com';
+    var API_KEY = 'AIzaSyCKCfgiO7n8xMe3eKmU5F8kg5drWrdnIYQ';
+
+    // Array of API discovery doc URLs for APIs used by the quickstart
+    var DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+
+    // Authorization scopes required by the API; multiple scopes can be
+    // included, separated by spaces.
+    var SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
+
+    var authorizeButton = document.getElementById('authorize_button');
+    var signoutButton = document.getElementById('signout_button');
+
+    /**
+     *  On load, called to load the auth2 library and API client library.
+     */
+    function handleClientLoad() {
+        gapi.load('client:auth2', initClient);
+    }
+
+    /**
+     *  Initializes the API client library and sets up sign-in state
+     *  listeners.
+     */
+    function initClient() {
+        gapi.client.init({
+            apiKey: API_KEY,
+            clientId: CLIENT_ID,
+            discoveryDocs: DISCOVERY_DOCS,
+            scope: SCOPES
+        }).then(function () {
+            // Listen for sign-in state changes.
+            gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+            // Handle the initial sign-in state.
+            updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            authorizeButton.onclick = handleAuthClick;
+            signoutButton.onclick = handleSignoutClick;
+        }, function(error) {
+            appendPre(JSON.stringify(error, null, 2));
+        });
+    }
+
+    /**
+     *  Called when the signed in status changes, to update the UI
+     *  appropriately. After a sign-in, the API is called.
+     */
+    function updateSigninStatus(isSignedIn) {
+        if (isSignedIn) {
+            authorizeButton.style.display = 'none';
+            signoutButton.style.display = 'block';
+            // listMajors();
+            makeTimeline();
+        } else {
+            authorizeButton.style.display = 'block';
+            signoutButton.style.display = 'none';
+        }
+    }
+
+    /**
+     *  Sign in the user upon button click.
+     */
+    function handleAuthClick(event) {
+        gapi.auth2.getAuthInstance().signIn();
+    }
+
+    /**
+     *  Sign out the user upon button click.
+     */
+    function handleSignoutClick(event) {
+        gapi.auth2.getAuthInstance().signOut();
+    }
+
+    /**
+     * Append a pre element to the body containing the given message
+     * as its text node. Used to display the results of the API call.
+     *
+     * @param {string} message Text to be placed in pre element.
+     */
+    function appendPre(message) {
+        var pre = document.getElementById('content');
+        var textContent = document.createTextNode(message + '\n');
+        pre.appendChild(textContent);
+    }
+
+    function makeTimeline() {
+        gapi.client.sheets.spreadsheets.values.get({
+            // spreadsheetId: '1astWf1jlEIF2PCziDdLZlTqyBxr88XCe4Nw5gEcG6VI',
+            // range: 'CY20!A2:J',
+            spreadsheetId: '1LaJ3U80XqSJj64xb_Tss5rpQZ7C8UawQKg-s4dqoyIA',
+            range: 'Oli\'s timeline test!A2:D',
+        }).then(function (response) {
+            var range = response.result;
+            var data = range.values;
+            var i = 1;
+            var groups = [];
+            for (var g = 0; g < data.length; g++) {
+                groups.push({id: g, content: ""});
+            }
+            var items = data.reduce(function (res, value) {
+
+                var startDate = value[0];
+                var endDate = value[1];
+                if (!startDate) {
+                    startDate = endDate;
+                }
+                var row = {
+                    id: i,
+                    // group: i,
+                    content: value[2],
+                    start: startDate,
+                    end: endDate,
+                    type: "box"
+                };
+                res.push(row);
+                i++;
+                return res;
+            }, []);
+            var container = document.getElementById('visualization');
+            // Configuration for the Timeline
+            var options = {
+                maxHeight: 1200,
+                orientation: "both",
+                max: "12/31/2030",
+                min: "01/01/2017",
+                // stack: false,
+                // zoomMax: 631138520000,
+                zoomMin: 31556926000,
+                groupHeightMode: 'fitItems',
+                // zoomable: false,
+                verticalScroll: true,
+                groupOrder: function (a, b) {
+                    if(a.content > b.content)// alphabetic order
+                        return 1;
+                    else if(a.content < b.content)
+                        return -1;
+                    return 0;
+                }
+            };
+
+            // Create a Timeline
+            // console.log(items)
+            var timeline = new vis.Timeline(container, items, options);
+
+        }, function (response) {
+            appendPre('Error: ' + response.result.error.message);
+        });
+    }
+
+</script>
+
+<script async defer src="https://apis.google.com/js/api.js"
+        onload="this.onload=function(){};handleClientLoad()"
+        onreadystatechange="if (this.readyState === 'complete') this.onload()">
+</script>
+
+<script type="text/javascript" src="//unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+
+<div class="card" style="overflow: scroll">
+    <div id="visualization"></div>
+</div>
+
+
+</body>
+</html>
