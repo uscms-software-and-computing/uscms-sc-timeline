@@ -120,15 +120,19 @@
             // spreadsheetId: '1astWf1jlEIF2PCziDdLZlTqyBxr88XCe4Nw5gEcG6VI',
             // range: 'CY20!A2:J',
             spreadsheetId: '1LaJ3U80XqSJj64xb_Tss5rpQZ7C8UawQKg-s4dqoyIA',
-            range: 'Oli\'s timeline test!A2:D',
+            range: 'Oli\'s timeline test!A2:E',
         }).then(function (response) {
             var range = response.result;
             var data = range.values;
             var i = 1;
-            var groups = [];
-            for (var g = 0; g < data.length; g++) {
-                groups.push({id: g, content: ""});
-            }
+            var colors = ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9','#bc80bd','#ccebc5','#ffed6f'];
+            var groupIds = data.map(function(v){ return v[4] });
+            var uniqueGroupIds = new Set(groupIds);
+            var groups = [...uniqueGroupIds].map(function (v) {return {id:v, content: "", style: "background-color: " + colors[v]}});
+            // var groups = [];
+            // for (var g = 0; g < data.length; g++) {
+            //     groups.push({id: g, content: ""});
+            // }
             var items = data.reduce(function (res, value) {
 
                 var startDate = value[0];
@@ -147,12 +151,13 @@
 
                 var row = {
                     id: i,
-                    // group: i,
+                    group: value[4],
                     content: value[2],
                     start: startDate,
                     end: endDate,
                     title: startDate + " - " + endDate,
-                    type: itemType
+                    type: itemType,
+                    style: "background-color: " + colors[value[4]]
                 };
                 res.push(row);
                 i++;
@@ -182,7 +187,7 @@
 
             // Create a Timeline
             // console.log(items)
-            var timeline = new vis.Timeline(container, items, options);
+            var timeline = new vis.Timeline(container, items, groups, options);
 
         }, function (response) {
             appendPre('Error: ' + response.result.error.message);
