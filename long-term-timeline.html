@@ -109,6 +109,12 @@
         pre.appendChild(textContent);
     }
 
+    function diff_days(date1, date2) {
+        var dt1 = new Date(date1);
+        var dt2 = new Date(date2);
+        return Math.floor((Date.UTC(dt2.getFullYear(), dt2.getMonth(), dt2.getDate()) - Date.UTC(dt1.getFullYear(), dt1.getMonth(), dt1.getDate()) ) /(1000 * 60 * 60 * 24));
+    }
+
     function makeTimeline() {
         gapi.client.sheets.spreadsheets.values.get({
             // spreadsheetId: '1astWf1jlEIF2PCziDdLZlTqyBxr88XCe4Nw5gEcG6VI',
@@ -127,16 +133,26 @@
 
                 var startDate = value[0];
                 var endDate = value[1];
+                var itemType = "range"
                 if (!startDate) {
-                    startDate = endDate;
+                    startDate = endDate
+                    itemType = "box";
                 }
+
+                // var days = diff_days(endDate, startDate);
+
+                if (diff_days(startDate, endDate) < 7) {
+                    itemType = "box";
+                }
+
                 var row = {
                     id: i,
                     // group: i,
                     content: value[2],
                     start: startDate,
                     end: endDate,
-                    type: "box"
+                    title: startDate + " - " + endDate,
+                    type: itemType
                 };
                 res.push(row);
                 i++;
